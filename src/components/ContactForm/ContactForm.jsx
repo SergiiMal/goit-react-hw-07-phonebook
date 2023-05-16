@@ -1,69 +1,92 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { Formik } from 'formik';
-import { Report } from 'notiflix/build/notiflix-report-aio';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import css from './ContactForm.module.css';
 
-import { addContact } from '../../redux/operationsApi';
+import { addContact } from '../../redux/contactsOperations';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectorItems } from '../../redux/selectors';
 
-import { selectContacts } from 'redux/selector';
-
-import { Input, Forms, Button, IoPerson } from './ContactForm.styled';
-
-const initialValues = {
-  name: '',
-  phone: '',
-};
-
-const ContactForm = () => {
-  const contacts = useSelector(selectContacts);
-
+export const ContactForm = () => {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
   const dispatch = useDispatch();
 
-  const nameCheck = name => {
-    return contacts.filter(contact => contact.name.includes(name));
+  const contacts = useSelector(selectorItems);
+
+  const handleChange = e => {
+    const { name, value } = e.currentTarget;
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+
+      case 'number':
+        setNumber(value);
+        break;
+
+      default:
+        break;
+    }
   };
 
-  const handleSubmit = (values, { resetForm }) => {
-    resetForm();
-    const check = nameCheck(values.name);
+  const handleSubmit = event => {
+    event.preventDefault();
 
-    if (check.length <= 0) {
-      dispatch(addContact(values));
+    const includeName = contacts.find(user => user.name === name);
+    if (includeName) {
+      alert(`${name} is already in contacs`);
       return;
     }
 
-    Report.info('Warning!', `"${values.name}" is already in contacts`, 'Okay');
+    dispatch(
+      addContact({
+        name,
+        number,
+      })
+    );
+    setName('');
+    setNumber('');
   };
 
   return (
-    <Formik initialValues={initialValues} onSubmit={handleSubmit}>
-      <Forms>
-        <label>
-          Name
-          <Input
-            type="text"
-            name="name"
-            pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-            title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-            required
-          />
-        </label>
-        <label>
-          Number
-          <Input
-            type="tel"
-            name="phone"
-            pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-            title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-            required
-          />
-        </label>
-
-        <Button type="submit">
-          <IoPerson size={26} />
-        </Button>
-      </Forms>
-    </Formik>
+    <form className={css.container} onSubmit={handleSubmit}>
+      <label className={css.item}>
+        Name
+        <input
+          type="text"
+          className={css.input}
+          name="name"
+          value={name}
+          pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+          title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+          required
+          onChange={handleChange}
+        />
+      </label>
+      <label className={css.item}>
+        Number
+        <input
+          type="tel"
+          name="number"
+          className={css.input}
+          value={number}
+          pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
+          title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+          required
+          onChange={handleChange}
+        />
+      </label>
+      <button className={css.button}>Add contact</button>
+    </form>
   );
 };
 
-export default ContactForm;
+ContactForm.propTypes = {
+  addContact: PropTypes.arrayOf(
+    PropTypes.exact({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string,
+      number: PropTypes.string,
+    })
+  ),
+};

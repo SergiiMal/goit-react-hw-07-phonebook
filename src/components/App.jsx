@@ -1,24 +1,40 @@
-import ContactForm from './ContactForm/ContactForm';
-import ContactsList from './ContactsList/ContactsList';
-import Filter from './Filter/Filter';
+import React from 'react';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { fetchContacts } from '../redux/contactsOperations';
 
-import { selectError } from 'redux/selector';
 import { useSelector } from 'react-redux';
-import { Container, Title, TitleContacts } from './App.styled';
-import { errorServes } from './ErrorPage/error';
+import { selectorContscts } from '../redux/selectors';
+import { selectorIsLoading } from '../redux/selectors';
+import { selectorError } from '../redux/selectors';
 
-function App() {
-  const error = useSelector(selectError);
+import { ContactForm } from './ContactForm/ContactForm';
+import { Filter } from './Filter/Filter';
+import { ContactList } from './ContactList/ContactList';
+import { Section } from './Section/Section';
+
+export const App = () => {
+  const contacts = useSelector(selectorContscts);
+  const error = useSelector(selectorError);
+  const isLoading = useSelector(selectorIsLoading);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchContacts());
+  }, [dispatch]);
+
   return (
-    <Container>
-      {error && errorServes()}
-      <Title>PhoneBook</Title>
-      <ContactForm />
-      <TitleContacts>Contacts</TitleContacts>
-      <Filter />
-      <ContactsList />
-    </Container>
+    <>
+      <Section title="Phonebook">
+        <ContactForm />
+      </Section>
+      <Section title="Contacts">
+        <Filter />
+        {isLoading && !error && <b>Request in progress...</b>}
+        {error && error}
+        <ContactList />
+        {contacts.length > 0 && <ContactList />}
+      </Section>
+    </>
   );
-}
-
-export default App;
+};
